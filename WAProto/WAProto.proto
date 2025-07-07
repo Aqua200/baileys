@@ -456,3 +456,17 @@ const startSock = async () => {
 
     } catch (error) {
         logger.error('Fatal error starting socket:', error);
+        process.exit(1);
+    }
+
+    async function getMessage(key: WAMessageKey): Promise<WAMessageContent | undefined> {
+        if (store) {
+            const msg = await store.loadMessage(key.remoteJid!, key.id!);
+            return msg?.message || undefined;
+        }
+        logger.warn(`Message request for key ${key.id} in ${key.remoteJid} without active store. Returning empty message.`);
+        return proto.Message.fromObject({});
+    }
+};
+
+startSock();
