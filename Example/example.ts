@@ -28,8 +28,9 @@ import libphonenumberJs from 'libphonenumber-js';
 
 const logger = MAIN_LOGGER.child({});
 
+// RECOMENDACIÓN: Considera externalizar estas rutas a variables de entorno (ej. process.env.STORE_PATH)
 const STORE_FILE_PATH = './baileys_store_multi.json';
-const AUTH_INFO_PATH = 'baileys_auth_info';
+const AUTH_INFO_PATH = 'baileys_auth_info'; // RECOMENDACIÓN: También externalizar a variables de entorno
 const STORE_SAVE_INTERVAL = 10_000;
 
 const prefix = new RegExp('^([' + ('‎/!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + '])');
@@ -214,6 +215,11 @@ const handleMessagesUpsert = async (upsert: { messages: proto.IWebMessageInfo[];
                 break;
 
             default:
+                // ADVERTENCIA DE SEGURIDAD:
+                // La siguiente sección permite la ejecución de código JavaScript arbitrario.
+                // Esto representa un riesgo de seguridad MUY ALTO en entornos de producción.
+                // Se recomienda ENCARECIDAMENTE eliminar o restringir esta funcionalidad
+                // solo a entornos de desarrollo o usuarios de MUCHA confianza.
                 if (customPrefix.test(body)) {
                     let i = 15;
                     let _return;
@@ -401,16 +407,16 @@ const startSock = async () => {
                     logger.info(`Received ${chats.length} chats, ${contacts.length} contacts, ${messages.length} msgs (is latest: ${isLatest})`)
                 }
                 if(events['message-receipt.update']) {
-                    logger.info('Message receipt update:', events['message-receipt.update'])
+                    logger.info('Message receipt update:', events['message-receipt.update']) // console.log -> logger.info
                 }
                 if(events['messages.reaction']) {
-                    logger.info('Message reaction:', events['messages.reaction'])
+                    logger.info('Message reaction:', events['messages.reaction']) // console.log -> logger.info
                 }
                 if(events['presence.update']) {
-                    logger.info('Presence update:', events['presence.update'])
+                    logger.info('Presence update:', events['presence.update']) // console.log -> logger.info
                 }
                 if(events['chats.update']) {
-                    logger.info('Chats update:', events['chats.update'])
+                    logger.info('Chats update:', events['chats.update']) // console.log -> logger.info
                 }
                 if(events['contacts.update']) {
                     for(const contact of events['contacts.update']) {
@@ -425,7 +431,7 @@ const startSock = async () => {
                     }
                 }
                 if(events['chats.delete']) {
-                    logger.info('Chats deleted:', events['chats.delete'])
+                    logger.info('Chats deleted:', events['chats.delete']) // console.log -> logger.info
                 }
             }
         );
