@@ -1,5 +1,8 @@
 import { proto } from '../../../WAProto'
 import { CiphertextMessage } from './ciphertext-message'
+import MAIN_LOGGER from '../../Utils/logger' // Importar el logger
+
+const logger = MAIN_LOGGER.child({}) // Inicializar el logger
 
 interface SenderKeyDistributionMessageStructure {
 	id: number
@@ -23,6 +26,7 @@ export class SenderKeyDistributionMessage extends CiphertextMessage {
 		serialized?: Uint8Array | null
 	) {
 		super()
+		logger.debug('SenderKeyDistributionMessage constructor called.') //
 
 		if(serialized) {
 			try {
@@ -42,8 +46,11 @@ export class SenderKeyDistributionMessage extends CiphertextMessage {
 					typeof distributionMessage.signingKey === 'string'
 						? Buffer.from(distributionMessage.signingKey, 'base64')
 						: distributionMessage.signingKey
+
+				logger.debug(`SenderKeyDistributionMessage deserialized. ID: ${this.id}, Iteration: ${this.iteration}.`) //
 			} catch (e) {
-				throw new Error(String(e))
+				logger.error(`Error deserializing SenderKeyDistributionMessage: ${e}.`, e) // Registrar el error
+				throw new Error(`Invalid SenderKeyDistributionMessage: ${e}`) // Relanzar un error más específico
 			}
 		} else {
 			const version = this.intsToByteHighAndLow(this.CURRENT_VERSION, this.CURRENT_VERSION)
@@ -62,6 +69,7 @@ export class SenderKeyDistributionMessage extends CiphertextMessage {
 			).finish()
 
 			this.serialized = Buffer.concat([Buffer.from([version]), message])
+			logger.debug(`New SenderKeyDistributionMessage created. ID: ${this.id}, Iteration: ${this.iteration}.`) //
 		}
 	}
 
@@ -70,11 +78,16 @@ export class SenderKeyDistributionMessage extends CiphertextMessage {
 	}
 
 	public serialize(): Uint8Array {
+		logger.debug(`Serializing SenderKeyDistributionMessage with ID: ${this.id}, Iteration: ${this.iteration}.`) //
 		return this.serialized
 	}
 
 	public getType(): number {
 		return this.SENDERKEY_DISTRIBUTION_TYPE
+	}
+
+	public getId(): number {
+		return this.id
 	}
 
 	public getIteration(): number {
@@ -87,9 +100,5 @@ export class SenderKeyDistributionMessage extends CiphertextMessage {
 
 	public getSignatureKey(): Uint8Array {
 		return typeof this.signatureKey === 'string' ? Buffer.from(this.signatureKey, 'base64') : this.signatureKey
-	}
-
-	public getId(): number {
-		return this.id
 	}
 }
