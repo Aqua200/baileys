@@ -20,17 +20,19 @@ import makeWASocket, {
     jidNormalizedUser
 } from '../src'; // Mantengo '../src' basándome en tus archivos subidos.
 
-import MAIN_LOGGER from '../src/Utils/logger'; // Mantengo '../src' basándome en tus archivos subidos.
+import MAIN_LOGGER from '../src/Utils/logger'; // Mantengo '../src' basándose en tus archivos subidos.
 import open from 'open';
 import fs from 'fs';
 import { format } from "util";
 import libphonenumberJs from 'libphonenumber-js';
+import 'dotenv/config'; // Importa dotenv para cargar variables de entorno
 
 const logger = MAIN_LOGGER.child({});
 
-// RECOMENDACIÓN: Considera externalizar estas rutas a variables de entorno (ej. process.env.STORE_PATH)
-const STORE_FILE_PATH = './baileys_store_multi.json';
-const AUTH_INFO_PATH = 'baileys_auth_info'; // RECOMENDACIÓN: También externalizar a variables de entorno
+// Rutas de almacenamiento configurables mediante variables de entorno
+// Si no se definen las variables de entorno, se usan las rutas por defecto.
+const STORE_FILE_PATH = process.env.STORE_PATH || './baileys_store_multi.json';
+const AUTH_INFO_PATH = process.env.AUTH_PATH || 'baileys_auth_info';
 const STORE_SAVE_INTERVAL = 10_000;
 
 const prefix = new RegExp('^([' + ('‎/!#$%+£¢€¥^°=¶∆×÷π√✓©®:;?&.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + '])');
@@ -38,7 +40,7 @@ const prefix = new RegExp('^([' + ('‎/!#$%+£¢€¥^°=¶∆×÷π√✓©®:
 const useStore = !process.argv.includes('--no-store');
 const doReplies = !process.argv.includes('--no-reply');
 const usePairingCode = process.argv.includes('--use-pairing-code');
-const useMobile = process.argv.includes('--mobile');
+const useMobile = process.argv.includes('----mobile');
 
 const msgRetryCounterCache = new NodeCache();
 
@@ -176,7 +178,8 @@ const handleMessagesUpsert = async (upsert: { messages: proto.IWebMessageInfo[];
                         rows: [
                             { title: "Ping", rowId: usedPrefix + "ping" },
                             { title: "Menú", rowId: usedPrefix + "menu" },
-                            { title: "Crear Encuesta", rowId: usedPrefix + "crear_encuesta Ejemplo de Pregunta|Opción A|Opción B" }
+                            { title: "Crear Encuesta", rowId: usedPrefix + "crear_encuesta Ejemplo de Pregunta|Opción A|Opción B" },
+                            { title: "Enviar Imagen", rowId: usedPrefix + "sendimage" } // Nuevo comando
                         ]
                     }]
                 }, { quoted: m });
@@ -209,13 +212,26 @@ const handleMessagesUpsert = async (upsert: { messages: proto.IWebMessageInfo[];
                     await replyFunc(chat, { text: 'Hubo un error al crear la encuesta.' }, { quoted: m });
                 }
                 break;
+            
+            case 'sendimage': // Nuevo comando para enviar una imagen
+                const imagePath = './sample_image.jpg'; // Reemplaza con la ruta de tu imagen
+                if (fs.existsSync(imagePath)) {
+                    await sock.sendMessage(chat, {
+                        image: { url: imagePath },
+                        caption: 'Aquí tienes una imagen de ejemplo.'
+                    }, { quoted: m });
+                    logger.info(`Imagen enviada desde: ${imagePath}`);
+                } else {
+                    await replyFunc(chat, { text: `Error: No se encontró la imagen en la ruta: ${imagePath}. Asegúrate de tener un archivo 'sample_image.jpg' en la misma carpeta que 'example.ts'.` }, { quoted: m });
+                }
+                break;
 
             case 'menu':
-                await replyFunc(chat, { text: 'Comandos disponibles:\n`!ping` - Responde con Pong.\n`!list` - Muestra un menú de opciones.\n`!crear_encuesta Pregunta?|Opcion1|Opcion2` - Crea una nueva encuesta.' }, { quoted: m });
+                await replyFunc(chat, { text: 'Comandos disponibles:\n`!ping` - Responde con Pong.\n`!list` - Muestra un menú de opciones.\n`!crear_encuesta Pregunta?|Opcion1|Opcion2` - Crea una nueva encuesta.\n`!sendimage` - Envía una imagen de ejemplo.' }, { quoted: m });
                 break;
 
             default:
-                // ADVERTENCIA DE SEGURIDAD:
+                // ADVERTENCIA de SEGURIDAD:
                 // La siguiente sección permite la ejecución de código JavaScript arbitrario.
                 // Esto representa un riesgo de seguridad MUY ALTO en entornos de producción.
                 // Se recomienda ENCARECIDAMENTE eliminar o restringir esta funcionalidad
@@ -407,16 +423,16 @@ const startSock = async () => {
                     logger.info(`Received ${chats.length} chats, ${contacts.length} contacts, ${messages.length} msgs (is latest: ${isLatest})`)
                 }
                 if(events['message-receipt.update']) {
-                    logger.info('Message receipt update:', events['message-receipt.update']) // console.log -> logger.info
+                    logger.info('Message receipt update:', events['message-receipt.update'])
                 }
                 if(events['messages.reaction']) {
-                    logger.info('Message reaction:', events['messages.reaction']) // console.log -> logger.info
+                    logger.info('Message reaction:', events['messages.reaction'])
                 }
                 if(events['presence.update']) {
-                    logger.info('Presence update:', events['presence.update']) // console.log -> logger.info
+                    logger.info('Presence update:', events['presence.update'])
                 }
                 if(events['chats.update']) {
-                    logger.info('Chats update:', events['chats.update']) // console.log -> logger.info
+                    logger.info('Chats update:', events['chats.update'])
                 }
                 if(events['contacts.update']) {
                     for(const contact of events['contacts.update']) {
@@ -431,7 +447,7 @@ const startSock = async () => {
                     }
                 }
                 if(events['chats.delete']) {
-                    logger.info('Chats deleted:', events['chats.delete']) // console.log -> logger.info
+                    logger.info('Chats deleted:', events['chats.delete'])
                 }
             }
         );
