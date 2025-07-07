@@ -1,3 +1,7 @@
+import MAIN_LOGGER from '../../Utils/logger' // Importar el logger
+
+const logger = MAIN_LOGGER.child({}) // Inicializar el logger
+
 interface Sender {
 	id: string
 	deviceId: number
@@ -37,6 +41,7 @@ export class SenderKeyName {
 	constructor(groupId: string, sender: Sender) {
 		this.groupId = groupId
 		this.sender = sender
+		logger.debug(`SenderKeyName created for Group ID: "${this.groupId}", Sender ID: "${this.sender.id}", Device ID: ${this.sender.deviceId}.`) //
 	}
 
 	public getGroupId(): string {
@@ -56,11 +61,18 @@ export class SenderKeyName {
 	}
 
 	public equals(other: SenderKeyName | null): boolean {
-		if(other === null) return false
-		return this.groupId === other.groupId && this.sender.toString() === other.sender.toString()
+		if(other === null) {
+			logger.debug(`Comparison with null SenderKeyName for ${this.toString()}. Returning false.`) //
+			return false
+		}
+		const isEqual = this.groupId === other.groupId && this.sender.id === other.sender.id && this.sender.deviceId === other.sender.deviceId
+		logger.debug(`Comparing SenderKeyName ${this.toString()} with ${other.toString()}. Result: ${isEqual}.`) //
+		return isEqual
 	}
 
 	public hashCode(): number {
-		return hashCode(this.groupId) ^ hashCode(this.sender.toString())
+		const hashVal = hashCode(this.serialize())
+		logger.debug(`Calculated hash code for ${this.toString()}: ${hashVal}.`) //
+		return hashVal
 	}
 }
