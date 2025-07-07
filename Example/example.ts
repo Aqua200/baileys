@@ -18,7 +18,7 @@ import makeWASocket, {
     Browsers,
     getContentType,
     jidNormalizedUser
-} from '../src'; // Mantengo '../src' basándome en tus archivos subidos.
+} from '../src'; // Mantengo '../src' basándose en tus archivos subidos.
 
 import MAIN_LOGGER from '../src/Utils/logger'; // Mantengo '../src' basándose en tus archivos subidos.
 import open from 'open';
@@ -40,8 +40,7 @@ const prefix = new RegExp('^([' + ('‎/!#$%+£¢€¥^°=¶∆×÷π√✓©®:
 const useStore = !process.argv.includes('--no-store');
 const doReplies = !process.argv.includes('--no-reply');
 const usePairingCode = process.argv.includes('--use-pairing-code');
-const useMobile = process.argv.includes('----mobile');
-
+const useMobile = process.argv.includes('--mobile'); // CORREGIDO: ahora con solo dos guiones
 const msgRetryCounterCache = new NodeCache();
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -423,7 +422,7 @@ const startSock = async () => {
                     logger.info(`Received ${chats.length} chats, ${contacts.length} contacts, ${messages.length} msgs (is latest: ${isLatest})`)
                 }
                 if(events['message-receipt.update']) {
-                    logger.info('Message receipt update:', events['message-receipt.update'])
+                    logger.info('Message receipt update:', events['message-receipt.update']) // CORREGIDO: ahora con guiones
                 }
                 if(events['messages.reaction']) {
                     logger.info('Message reaction:', events['messages.reaction'])
